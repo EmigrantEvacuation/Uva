@@ -25,10 +25,10 @@ using UnityEngine;
  * 1. stall, the plane does not have enough speed to provide lift aganist the G force
  * 2. sonic boom, the plane is so fast that its speed is far beyond the speed of sound
  */
-namespace UvaSimulator.Uva
+namespace UvaSimulator.Uva.ControlCalculator
 {
 	[RequireComponent(typeof (Rigidbody))]
-	public class UvaUserController : MonoBehaviour {
+	public class UvaUserControllCalculator : MonoBehaviour {
 
         // Aerodynamic 
 		[SerializeField] private float liftEffect = 0.2f;        // lift effect caused by speed from wings
@@ -44,24 +44,64 @@ namespace UvaSimulator.Uva
         [SerializeField] private float yawEffect = 0.1f;         // yaw Effect
 
         // Aeroplane Condition
-        public float alititude { get; private set; }
-        public float throttle { get; private set; }
-        public float pitchAngle { get; private set; } 
-        public float rollAngle { get; private set; }
-        public float yawAngle { get; private set; }
-        public float speedFoward { get; private set; }
-        public bool airBrakes { get; private set; }
-        public float enginPower { get; private set; }
+		private float alititude { get; set; }
+        private float throttle { get; set; }
+		private float throttleInput { get; set; }
+		private float pitchAngle { get; set; }
+		private float pitchInput { get; set; }
+		private float rollAngle { get; set; }
+		private float rollInput { get; set; }
+		private float yawAngle { get; set; }
+		private float yawInput { get; set; }
+		private float speedFoward { get; set; }
+		private bool airBrakes { get; set; }
+		private float enginPower { get; set; }
+
+		// RigidBody
+		private Rigidbody planeRigid;
+		private WheelCollider[] wheelRigids;
 
 		// Use this for initialization
 		void Start () {
 			
-            // get all the 
+			// get all the rigids
+			planeRigid = GetComponent<Rigidbody>();
+			var colliders = transform.Find ("Colliders");
+			wheelRigids = colliders.GetComponentsInChildren<WheelCollider>();
+		
 		}
 		
-		// Update is called once per frame
-		void Update () {
-			
+		public void Move(float pitchinput = 0, float rollinput = 0, float yawinput = 0, float throttleinput = 0, bool airbrakes = false){
+			throttleInput = throttleinput;
+			pitchInput = pitchinput;
+			rollInput = rollinput;
+			yawInput = yawinput;
+		    airBrakes = airbrakes;
+
+			_ClampInputs ();
+
+		}
+
+		private void _ClampInputs()
+		{
+			throttleInput = Mathf.Clamp (throttleInput, -1, 1);
+			pitchInput = Mathf.Clamp (pitchInput, -1, 1);
+			rollInput = Mathf.Clamp (rollInput, -1, 1);
+			yawInput = Mathf.Clamp (yawInput, -1, 1);
+		}
+
+		private void _CalculateRollYawPitchAngle()
+		{
+			var globalforward = transform.forward;
+			globalforward.y = 0;
+			if (globalforward.sqrMagnitude > 0) {
+				globalforward.Normalize (); // set the vector's 
+				var localforward = transform.InverseTransformDirection (globalforward);
+				pitchAngle = Mathf.Atan2 (localforward.y, localforward.z);
+
+				rollAngle = Mathf.Atan2 (localforward.y, localforward.x);
+				yawAngle = Mathf.Atan2 (localforward.x, localforward.z);
+			}
 		}
 	}
 }

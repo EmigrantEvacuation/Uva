@@ -9,7 +9,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{CDD242F9-BE54-E438-B086-2E9F0035630F}</ProjectGuid>
+    <ProjectGuid>{ACA9C4D4-8EF7-DFE0-66C1-D835B5A2D4F3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -51,7 +51,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\sub_assets\scripts\UvaUserController.cs" />
+     <Compile Include="Assets\sub_assets\scripts\TransformExtension.cs" />
+     <Compile Include="Assets\sub_assets\scripts\UvaModuleConfig.cs" />
+     <Compile Include="Assets\sub_assets\scripts\UvaUserControllCalculator.cs" />
  <Reference Include="UnityEngine.UIAutomation">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/UIAutomation/UnityEngine.UIAutomation.dll</HintPath>
  </Reference>
