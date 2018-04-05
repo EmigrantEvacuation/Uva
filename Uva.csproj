@@ -300,6 +300,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\sub_assets\scripts\TransformExtension.cs" />
+    <Compile Include="Assets\sub_assets\scripts\UvaModuleConfig.cs" />
+    <Compile Include="Assets\sub_assets\scripts\UvaUserControllCalculator.cs" />
     <Compile Include="Assets\sub_assets\scripts\UvaUserController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
