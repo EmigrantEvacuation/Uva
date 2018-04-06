@@ -35,19 +35,20 @@ namespace UvaSimulator.Uva.ControlCalculator
 	public class UvaUserControllCalculator : MonoBehaviour {
 
         // Aerodynamic 
-		[SerializeField] private float liftEffect = 0.002f;                 // lift effect caused by speed from wings
-        [SerializeField] private float dragIncreaseFactor = 0.001f;       // how much linear drag should increase
-        [SerializeField] private float angularDragIncreaseFactor = 0.02f; // how much angular drag should increase 
-        [SerializeField] private float airDensity = 0.5f;                 // air Density
+		[SerializeField] private float liftEffect = 0.002f;               // lift effect caused by speed from wings
+        [SerializeField] private float linearDragFactor = 0.001f;         // how much linear drag should increase
+        [SerializeField] private float angularDragFactor = 0.05f;          // how much angular drag should increase 
+        [SerializeField] private float airDensity = 2.0f;                 // air Density
+        [SerializeField] private float airDynamicEffect = 2.0f;           // air dynamic effect for the direction of the velocity
 
         // Aeroplane Configuration
 		[SerializeField] private float maxEnginPower = 40.0f;      // max engin power 
 		[SerializeField] private float zeroLiftSpeed = 300.0f;     // speed that the lift strength no longer applied
-        [SerializeField] private float airBrakesEffect = 0.2f;     // brakes
+        [SerializeField] private float airBrakeEffect = 0.02f;     // brakes
         [SerializeField] private float fuelAmount = 200.0f;        // total fuel
-        [SerializeField] private float pitchEffect = 100f;         // pitch Effect
-        [SerializeField] private float rollEffect = 70f;          // roll Effect
-        [SerializeField] private float yawEffect = 20f;           // yaw Effect
+        [SerializeField] private float pitchEffect = 0.6f;         // pitch Effect
+        [SerializeField] private float rollEffect = 1f;          // roll Effect
+        [SerializeField] private float yawEffect = 0.3f;           // yaw Effect
         [SerializeField] private float throttleChangeSpeed = 0.3f; // the speed of throttle changing
         [SerializeField] private float wingArea = 1.0f;            // the area of wings 
 
@@ -96,6 +97,8 @@ namespace UvaSimulator.Uva.ControlCalculator
           
             _CalculateAirLift();
 
+            _CalculateAirDynamicEffect();
+
             _CalculateTorque();
 
             _CalculateEnginForce();
@@ -103,7 +106,7 @@ namespace UvaSimulator.Uva.ControlCalculator
             _CalculateDrag();
            
             _CalculateAlititude();
-            
+            print(planeRigid.velocity);
 		}
 
 		private void _ClampInputs()
@@ -141,6 +144,24 @@ namespace UvaSimulator.Uva.ControlCalculator
             fuelAmount -= Throttle * Time.deltaTime;
         }
 
+        private void _CalculateAirDynamicEffect()
+        {
+            // to change the velocity of the plane
+            // without it the plane will behave more like a space ship
+
+            // first, calculate the projection of the real speed direction and the forward direction
+            if(planeRigid.velocity.magnitude > 0)
+            {
+                float airfactor = Vector3.Dot(transform.forward, planeRigid.velocity.normalized);
+                // multiply itself, the airfactor is actually a approximation of the drag
+                airfactor *= airfactor;
+
+                // apply a linear interpolation to get a new velocity which has something to do with the air dynamic effect
+                var newvelocity = Vector3.Lerp(planeRigid.velocity, transform.forward * ForwardSpeed, airfactor * airDynamicEffect * Time.deltaTime);
+                planeRigid.velocity = newvelocity;
+
+            }
+        }
         private void _CalculateAirLift()
         {
             // THINKING: I'm not sure if it does need further consideration
@@ -163,13 +184,13 @@ namespace UvaSimulator.Uva.ControlCalculator
             // TODO: the whole drag system need further consideration
 
             // first, drag caused by speed
-            var linearairdrag = planeRigid.velocity.magnitude * dragIncreaseFactor;
+            var linearairdrag = planeRigid.velocity.magnitude * linearDragFactor;
 
             // second, drag changes by airbrake
-            linearairdrag += AirBrakes ? (planeRigid.velocity.magnitude * airBrakesEffect) : 0.0f;
+            linearairdrag += AirBrakes ? (-planeRigid.velocity.magnitude * airBrakeEffect) : 0.0f;
 
             // third, angular drag caused by speed
-            var angulardrag = planeRigid.velocity.magnitude * angularDragIncreaseFactor;
+            var angulardrag = ForwardSpeed * angularDragFactor;
 
             planeRigid.drag = linearairdrag;
             planeRigid.angularDrag = angulardrag;
@@ -185,7 +206,7 @@ namespace UvaSimulator.Uva.ControlCalculator
             //print(PitchInput);
             torque += RollInput * rollEffect * transform.forward;
             torque += YawInput * yawEffect * transform.up;
-            planeRigid.AddTorque(torque);
+            planeRigid.AddTorque(torque * ForwardSpeed);
         }
 
         private void _CalculateAlititude()

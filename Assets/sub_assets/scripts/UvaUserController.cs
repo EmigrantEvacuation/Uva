@@ -26,7 +26,6 @@ namespace UvaSimulator.Uva.Controller
             Throttle = Input.GetKey(KeyCode.W) ? 1.0f : 0.5f;
 
             Pitch = Input.GetAxis("Vertical");
-            print(Pitch);
             Row = Input.GetAxis("Horizontal");
 
             if (Input.GetKey(KeyCode.A))
