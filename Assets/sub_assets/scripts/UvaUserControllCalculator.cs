@@ -43,17 +43,17 @@ namespace UvaSimulator.Uva.ControlCalculator
 
         // Aeroplane Configuration
 		[SerializeField] private float maxEnginPower = 40.0f;      // max engin power 
-		[SerializeField] private float zeroLiftSpeed = 300.0f;     // speed that the lift strength no longer applied
+		[SerializeField] private float zeroLiftSpeed = 1000.0f;     // speed that the lift strength no longer applied
         [SerializeField] private float airBrakeEffect = 0.02f;     // brakes
         [SerializeField] private float fuelAmount = 200.0f;        // total fuel
         [SerializeField] private float pitchEffect = 0.6f;         // pitch Effect
         [SerializeField] private float rollEffect = 1f;          // roll Effect
         [SerializeField] private float yawEffect = 0.3f;           // yaw Effect
         [SerializeField] private float throttleChangeSpeed = 0.3f; // the speed of throttle changing
-        [SerializeField] private float wingArea = 1.0f;            // the area of wings 
+        [SerializeField] private float wingArea = 0.01f;            // the area of wings 
 
         // Aeroplane Condition
-		public float Alititude { get; private set; }
+		public float Altitude { get; private set; }
         public float ForwardSpeed { get; private set; }
         public float Throttle { get; private set; }
 		public float ThrottleInput { get; private set; }
@@ -63,9 +63,10 @@ namespace UvaSimulator.Uva.ControlCalculator
 		public float RollInput { get; private set; }
 		public float YawAngle { get; private set; }
 		public float YawInput { get; private set; }
-		public float SpeedFoward { get; private set; }
+		//public float SpeedFoward { get; private set; }
 		public bool AirBrakes { get; private set; }
 		public float EnginPower { get; private set; }
+        public float Fuel { get; private set; }
 
 		// RigidBody
 		private Rigidbody planeRigid;
@@ -75,7 +76,8 @@ namespace UvaSimulator.Uva.ControlCalculator
 			
 			// get all the rigids
 			planeRigid = GetComponent<Rigidbody>();
-		
+            // fuel is full at the start
+            Fuel = fuelAmount;
 		}
 		
 		public void Move(float pitchinput = 0, float rollinput = 0, float yawinput = 0, float throttleinput = 0, bool airbrakes = false){
@@ -85,7 +87,7 @@ namespace UvaSimulator.Uva.ControlCalculator
 			YawInput = yawinput;
 		    AirBrakes = airbrakes;
 
-			_ClampInputs ();
+			_ClampInputs();
            
             _CalculateRollYawPitchAngle();
            
@@ -105,8 +107,8 @@ namespace UvaSimulator.Uva.ControlCalculator
            
             _CalculateDrag();
            
-            _CalculateAlititude();
-            print(planeRigid.velocity);
+            _CalculateAltitude();
+            //print(SpeedFoward);
 		}
 
 		private void _ClampInputs()
@@ -129,19 +131,20 @@ namespace UvaSimulator.Uva.ControlCalculator
         private void _CalculateForwardSpeed()
         {
             var localvelocity = transform.InverseTransformDirection(planeRigid.velocity);
+            //print(localvelocity);
             ForwardSpeed = Mathf.Max(0.0f, localvelocity.z); //when it hit brakes and slow down, it cannot reverse
         }
 
         private void _CalculateLiftEffect()
         {
-            liftEffect = Mathf.InverseLerp(zeroLiftSpeed, 0.0f, ForwardSpeed);
+            liftEffect = Mathf.InverseLerp(0.0f, zeroLiftSpeed, ForwardSpeed);
         }
 
         private void _CalculateThrottleAndFuel()
         {
             Throttle = Mathf.Clamp01(Throttle + ThrottleInput * Time.deltaTime * throttleChangeSpeed);
             EnginPower = Throttle * maxEnginPower;
-            fuelAmount -= Throttle * Time.deltaTime;
+            Fuel -= Throttle * Time.deltaTime;
         }
 
         private void _CalculateAirDynamicEffect()
@@ -166,13 +169,14 @@ namespace UvaSimulator.Uva.ControlCalculator
         {
             // THINKING: I'm not sure if it does need further consideration
             var liftDirection = transform.up;
-            float lift = 0.5f * liftEffect * airDensity * SpeedFoward * SpeedFoward * wingArea;
+            float lift = 0.5f * liftEffect * airDensity * ForwardSpeed * ForwardSpeed * wingArea;
             planeRigid.AddForce(lift * liftDirection);
         }
 
         private void _CalculateEnginForce()
         {
             var enginforce = EnginPower * transform.forward;
+            print(enginforce);
             planeRigid.AddForce(enginforce);
         }
 
@@ -209,11 +213,11 @@ namespace UvaSimulator.Uva.ControlCalculator
             planeRigid.AddTorque(torque * ForwardSpeed);
         }
 
-        private void _CalculateAlititude()
+        private void _CalculateAltitude()
         {
             var raydown = new Ray(transform.position, -Vector3.up);
             RaycastHit hit;
-            Alititude = Physics.Raycast(raydown, out hit) ? hit.distance : transform.position.y;
+            Altitude = Physics.Raycast(raydown, out hit) ? hit.distance : transform.position.y;
         }
 	}
 }
